@@ -11,6 +11,7 @@ RUN /usr/bin/reg-add.py 'HKCU/Software/Wine/AppDefaults/FoxitPDFReader.exe/X11 D
 
 # Generate a wrapper script to run Foxit Reader
 RUN /usr/bin/generate-wrapper.py \
+	--architecture 32 \
 	--application "C:/Program Files (x86)/Foxit Software/Foxit PDF Reader/FoxitPDFReader.exe" \
 	--appdataDir "$WINEPREFIX/drive_c/users/nonroot/AppData/Roaming/Foxit Software" \
 	--registryKey 'HKCU/Software/Foxit Software' \
@@ -21,3 +22,6 @@ ENTRYPOINT ["/home/nonroot/foxitreader.sh"]
 
 # Configure a bind-mount for Foxit Reader's persistent configuraton data
 LABEL docker-shell.mounts.wine-foxitreader.1="~/.config/FoxitReader:/home/nonroot/.local/share/wineprefixes/prefix/drive_c/users/nonroot/AppData/Roaming/Foxit Software:rw"
+
+# Configure the entrypoint to run when starting additional application instances inside an existing container
+LABEL application-images.entrypoint="/usr/bin/entrypoint.py --entrypoint-skip-dpi wine 'C:/Program Files (x86)/Foxit Software/Foxit PDF Reader/FoxitPDFReader.exe'"

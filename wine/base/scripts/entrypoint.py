@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
+from os.path import exists, expandvars, join
 from subprocess import run
-import os, sys
+import argparse, os, sys
 
 
 # Our mapping from scale factors to DPI values
@@ -39,40 +40,57 @@ def log(message):
 
 # If the supplied command-line parameter represents a filesystem path then this transforms it so it can be passed to the entrypoint command
 def processPaths(p):
-	p = os.path.expandvars(p)
-	if p.startswith('/') and os.path.exists(p):
+	
+	# Expand any variables in the parameter
+	p = expandvars(p)
+	
+	# If the parameter represents a path on the host filesystem then prefix it with the bind-mount for the root of the host filesystem
+	hostPath = join('/host', p[1:])
+	if p.startswith('/') and not exists(p) and exists(hostPath):
+		p = hostPath
+	
+	# If the parameter represents a path that can be transformed into a Windows filesystem path by Wine then use the transformed version
+	if p.startswith('/') and exists(p):
 		p = run(['winepath', '--windows', p], capture_output=True).stdout.decode('utf-8').strip()
+	
 	return p
 
 
-# Attempt to retrieve the scale factor if one was specified, otherwise default to a scale of 1.0x (100%)
-scaleFactor = 1.0
-envValue = os.environ.get('WINESCALE', None)
-if envValue is not None:
-	try:
-		scaleFactor = float(envValue)
-	except:
-		log('Warning: WINESCALE value {} is not a valid floating-point number, ignoring.'.format(envValue))
+# Parse our command-line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--entrypoint-skip-dpi', action='store_true', help="Skip setting registry keys for DPI based on scale factor from WINESCALE")
+options, args = parser.parse_known_args()
 
-# Find the closest supported scale factor
-if scaleFactor not in DPI_VALUES:
-	candidates = list([s for s in reversed(DPI_VALUES.keys()) if scaleFactor >= s])
-	closest = candidates[0] if len(candidates) > 0 else 1.0
-	log('Warning: requested scale factor {} is not supported, using {} instead.'.format(scaleFactor, closest))
-	scaleFactor = closest
-
-# Retrieve the DPI value for our scale factor and convert it to a hexadecimal representation with 8 digits as expected by `reg add`
-# (Format specifier from here: <https://stackoverflow.com/a/12638477>)
-dpi = '{0:#0{1}x}'.format(DPI_VALUES.get(scaleFactor), 8 + len('0x'))
-
-# Update Wine's DPI scaling registry keys
-env = {**os.environ, **{'WINEDEBUG': '-all'}}
-for key in ['HKCU\\Control Panel\\Desktop', 'HKCU\\Software\\Wine\\Fonts', 'HKCC\\Software\\Fonts']:
-	command = ['wine64', 'reg', 'add', key, '/t', 'REG_DWORD', '/v', 'LogPixels', '/d', dpi, '/f']
-	log(command)
-	run(command, check=True, env=env)
+if not options.entrypoint_skip_dpi:
+	
+	# Attempt to retrieve the scale factor if one was specified, otherwise default to a scale of 1.0x (100%)
+	scaleFactor = 1.0
+	envValue = os.environ.get('WINESCALE', None)
+	if envValue is not None:
+		try:
+			scaleFactor = float(envValue)
+		except:
+			log('Warning: WINESCALE value {} is not a valid floating-point number, ignoring.'.format(envValue))
+	
+	# Find the closest supported scale factor
+	if scaleFactor not in DPI_VALUES:
+		candidates = list([s for s in reversed(DPI_VALUES.keys()) if scaleFactor >= s])
+		closest = candidates[0] if len(candidates) > 0 else 1.0
+		log('Warning: requested scale factor {} is not supported, using {} instead.'.format(scaleFactor, closest))
+		scaleFactor = closest
+	
+	# Retrieve the DPI value for our scale factor and convert it to a hexadecimal representation with 8 digits as expected by `reg add`
+	# (Format specifier from here: <https://stackoverflow.com/a/12638477>)
+	dpi = '{0:#0{1}x}'.format(DPI_VALUES.get(scaleFactor), 8 + len('0x'))
+	
+	# Update Wine's DPI scaling registry keys
+	env = {**os.environ, **{'WINEDEBUG': '-all'}}
+	for key in ['HKCU\\Control Panel\\Desktop', 'HKCU\\Software\\Wine\\Fonts', 'HKCC\\Software\\Fonts']:
+		command = ['wine64', 'reg', 'add', key, '/t', 'REG_DWORD', '/v', 'LogPixels', '/d', dpi, '/f']
+		log(command)
+		run(command, check=True, env=env)
 
 # If an entrypoint command was specified then run it, otherwise just start a bash shell
-entrypoint = list([processPaths(a) for a in sys.argv[1:]]) if len(sys.argv) > 1 else ['/bin/bash']
+entrypoint = list([args[0]] + [processPaths(a) for a in args[1:]]) if len(args) > 1 else ['/bin/bash']
 log(entrypoint)
 sys.exit(run(entrypoint).returncode)

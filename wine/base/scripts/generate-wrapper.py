@@ -22,7 +22,8 @@ if [ -f "$REGISTRY_FILE" ]; then
 fi
 
 # Run the application and wait for wineserver to finish execution
-/usr/bin/entrypoint.py wine "{}" "$@"
+/usr/bin/entrypoint.py {} "{}" "$@"
+/usr/bin/wait-for-wineserver.py
 
 # Save any updated registry data to the AppData directory
 wine64 reg export '{}' "$REGISTRY_FILE" /y
@@ -32,6 +33,7 @@ wine64 reg export '{}' "$REGISTRY_FILE" /y
 
 # Our supported command-line arguments
 parser = argparse.ArgumentParser()
+parser.add_argument('--architecture', required=True, type=int, choices=[32, 64], help="The architecture of the application (32-bit or 64-bit)")
 parser.add_argument('--application', required=True, help='The path to the application that is being wrapped')
 parser.add_argument('--appdataDir', required=True, help='The path to the application\'s AppData directory')
 parser.add_argument('--registryKey',  required=True, help="The path to the application\'s root registry key")
@@ -43,6 +45,7 @@ args = parser.parse_args()
 # Fill out the template with the specified values
 wrapper = TEMPLATE.format(
 	args.appdataDir,
+	'wine64' if args.architecture == 64 else 'wine',
 	args.application,
 	args.registryKey.replace('/', '\\')
 )
