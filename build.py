@@ -16,7 +16,9 @@ def build(tag, context, buildArgs={}):
 
 
 # Build all available container images
+wineArgs = {'WINE_VERSION': WINE_VERSION}
 build('adamrehn/common-base:latest', './common-base')
-build('adamrehn/wine-base:{}'.format(WINE_VERSION), './wine/base', {'WINE_VERSION': WINE_VERSION, 'WINETRICKS_VERSION': '4340f09f0c17566205dcc74e15211ddac7780148'})
-build('adamrehn/wine-dotnet:{}'.format(WINE_VERSION), './wine/dotnet', {'WINE_VERSION': WINE_VERSION})
-build('adamrehn/wine-foxitreader:latest', './wine-foxitreader', {'WINE_VERSION': WINE_VERSION})
+build('adamrehn/wine-base:{}'.format(WINE_VERSION), './wine/base', {**wineArgs, 'WINETRICKS_VERSION': '4340f09f0c17566205dcc74e15211ddac7780148'})
+build('adamrehn/wine-dotnet:{}'.format(WINE_VERSION), './wine/dotnet', wineArgs)
+build('adamrehn/wine-mono:{}'.format(WINE_VERSION), './wine/mono', wineArgs)
+build('adamrehn/wine-foxitreader:latest', './wine-foxitreader', wineArgs)

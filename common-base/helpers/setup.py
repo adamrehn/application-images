@@ -20,6 +20,7 @@ setup(
 	entry_points = {
 		'console_scripts': [
 			'generate-application-entrypoint=application_images_helpers.tools:generate_application_entrypoint',
+			'generate-tool-alias=application_images_helpers.tools:generate_tool_alias',
 			'wine-reg-add=application_images_helpers.tools:wine_reg_add'
 		]
 	}
