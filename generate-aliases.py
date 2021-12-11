@@ -13,7 +13,7 @@ EXISTING=`docker ps --filter 'name={name}-running' --format '{{{{.ID}}}}'`
 if [ "$EXISTING" != "" ]; then
 	
 	# Start a second instance of the application inside the running container
-	docker exec -ti '{name}-running' {entrypoint} "$@"
+	docker exec -ti '{name}-running' {entrypoint} ---entrypoint-additional-instance "$@"
 	
 else
 	
@@ -26,17 +26,15 @@ fi
 # Generates an alias for the specified container image
 def generate(client, outdir, name, image):
 	
-	# Query the container image labels and attempt to retrieve the entrypoint metadata
+	# Attempt to retrieve the container image entrypoint
 	details = client.images.get(image)
-	labels = details.attrs['Config']['Labels'] if details.attrs['Config']['Labels'] is not None else {}
-	candidates = list([labels[key] for key in labels if key == 'application-images.entrypoint'])
-	entrypoint = candidates[0] if len(candidates) > 0 else None
+	entrypoint = details.attrs.get('Config', {}).get('Entrypoint', None)
 	if entrypoint is None:
-		raise RuntimeError('failed to retrieve entrypoint metadata label for image "{}"!'.format(image))
+		raise RuntimeError('failed to retrieve entrypoint for image "{}"!'.format(image))
 	
 	# Generate the alias script
 	alias = join(outdir, name)
-	Path(alias).write_bytes(TEMPLATE.format(name=name, image=image, entrypoint=entrypoint).encode('utf-8'))
+	Path(alias).write_bytes(TEMPLATE.format(name=name, image=image, entrypoint=' '.join(entrypoint)).encode('utf-8'))
 	run(['chmod', '+x', alias], check=True)
 
 

@@ -5,7 +5,9 @@ FROM nvidia/opengl:1.2-glvnd-runtime-ubuntu20.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install our common prerequisites
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+	apt-get update && apt-get install -y --no-install-recommends \
 		apt-transport-https \
 		ca-certificates \
 		curl \
@@ -15,8 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		python3-pip \
 		software-properties-common \
 		sudo \
-		tzdata && \
-	rm -rf /var/lib/apt/lists/*
+		tzdata
 
 # Enable Vulkan support for NVIDIA GPUs
 RUN VULKAN_API_VERSION=`dpkg -s libvulkan1 | grep -oP 'Version: [0-9|\.]+' | grep -oP '[0-9|\.]+'` && \
@@ -29,6 +30,10 @@ RUN VULKAN_API_VERSION=`dpkg -s libvulkan1 | grep -oP 'Version: [0-9|\.]+' | gre
 			\"api_version\" : \"${VULKAN_API_VERSION}\"\
 		}\
 	}" > /etc/vulkan/icd.d/nvidia_icd.json
+
+# Install the Python package with our helper functionality and tools
+COPY helpers /tmp/helpers
+RUN pip3 install /tmp/helpers
 
 # Disable the default "lecture" message the first time a user runs a command using sudo
 RUN echo 'Defaults lecture="never"' >> /etc/sudoers

@@ -1,32 +1,31 @@
 FROM adamrehn/common-base:latest
 
 # Install our prerequisites and useful tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+	apt-get update && apt-get install -y --no-install-recommends \
 		cabextract \
 		p7zip \
 		winbind \
-		xvfb && \
-	rm -rf /var/lib/apt/lists/*
+		xvfb
 
 # Enable the installation of 32-bit packages
 RUN dpkg --add-architecture i386
 
 # Install Wine
-RUN curl -fsSL 'https://dl.winehq.org/wine-builds/winehq.key' | apt-key add - && \
+ARG WINE_VERSION
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+	curl -fsSL 'https://dl.winehq.org/wine-builds/winehq.key' | apt-key add - && \
 	add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ focal main' && \
-	apt-get update && apt-get install -y --install-recommends winehq-devel && \
-	rm -rf /var/lib/apt/lists/*
+	apt-get update && apt-get install -y --install-recommends \
+		winehq-staging=${WINE_VERSION}~focal-1 \
+		wine-staging=${WINE_VERSION}~focal-1 \
+		wine-staging-amd64=${WINE_VERSION}~focal-1 \
+		wine-staging-i386=${WINE_VERSION}~focal-1
 
 # Install Winetricks
-RUN curl -fsSL 'https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks' -o /usr/bin/winetricks && \
+ARG WINETRICKS_VERSION
+RUN curl -fsSL "https://raw.githubusercontent.com/Winetricks/winetricks/${WINETRICKS_VERSION}/src/winetricks" -o /usr/bin/winetricks && \
 	chmod +x /usr/bin/winetricks
-
-# Copy our helper scripts into the container image and make them all executable
-COPY ./scripts/entrypoint.py /usr/bin/entrypoint.py
-COPY ./scripts/generate-wrapper.py /usr/bin/generate-wrapper.py
-COPY ./scripts/reg-add.py /usr/bin/reg-add.py
-COPY ./scripts/wait-for-wineserver.py /usr/bin/wait-for-wineserver.py
-RUN chmod +x /usr/bin/entrypoint.py /usr/bin/generate-wrapper.py /usr/bin/reg-add.py /usr/bin/wait-for-wineserver.py
 
 # Create a new Wine prefix for our non-root user
 USER nonroot
@@ -36,17 +35,14 @@ RUN mkdir -p "$WINEPREFIX"
 # Preinstall the 64-bit version of Wine Gecko
 RUN curl -fSL 'https://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86_64.msi' -o /tmp/wine_gecko-2.47-x86_64.msi && \
 	wine64 msiexec /i /tmp/wine_gecko-2.47-x86_64.msi && \
-	/usr/bin/wait-for-wineserver.py && \
+	wineserver --wait && \
 	rm /tmp/wine_gecko-2.47-x86_64.msi
 
 # Preinstall the 32-bit version of Wine Gecko
 RUN curl -fSL 'https://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86.msi' -o /tmp/wine-gecko-2.47.2-x86.msi && \
 	wine msiexec /i /tmp/wine-gecko-2.47.2-x86.msi && \
-	/usr/bin/wait-for-wineserver.py && \
+	wineserver --wait && \
 	rm /tmp/wine-gecko-2.47.2-x86.msi
-
-# Set the entrypoint script as the container's default entrypoint
-ENTRYPOINT ["/usr/bin/entrypoint.py"]
 
 # Configure docker-shell with the required bind-mounts and environment variables, and enable IPC namespace sharing with the host (which improves X11 performance)
 LABEL docker-shell.args.wine-base.1="--ipc=host"
