@@ -23,3 +23,6 @@ ENTRYPOINT ["/home/nonroot/foxitreader.py"]
 
 # Configure a bind-mount for Foxit Reader's persistent configuraton data
 LABEL docker-shell.mounts.wine-foxitreader.1="~/.config/FoxitReader:/home/nonroot/.local/share/wineprefixes/prefix/drive_c/users/nonroot/AppData/Roaming/Foxit Software:rw"
+
+# Configure the application name for use when generating a desktop entry
+LABEL application-images.name="Foxit PDF Reader"
