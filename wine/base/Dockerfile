@@ -17,10 +17,10 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
 	curl -fsSL 'https://dl.winehq.org/wine-builds/winehq.key' | apt-key add - && \
 	add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ focal main' && \
 	apt-get update && apt-get install -y --install-recommends \
-		winehq-staging=${WINE_VERSION}~focal-1 \
-		wine-staging=${WINE_VERSION}~focal-1 \
-		wine-staging-amd64=${WINE_VERSION}~focal-1 \
-		wine-staging-i386=${WINE_VERSION}~focal-1
+		winehq-devel=${WINE_VERSION}~focal-1 \
+		wine-devel=${WINE_VERSION}~focal-1 \
+		wine-devel-amd64=${WINE_VERSION}~focal-1 \
+		wine-devel-i386=${WINE_VERSION}~focal-1
 
 # Install Winetricks
 ARG WINETRICKS_VERSION
