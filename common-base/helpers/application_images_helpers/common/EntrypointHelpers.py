@@ -103,7 +103,7 @@ class EntrypointHelpers:
 		EntrypointHelpers._log(command)
 		run(command, env={**os.environ, **envVars})
 		
-		# If we are running an application with Wine then wait for the Wine server to complete execution
-		if useWine:
+		# If we are running an application with Wine and this is the primary application instance then wait for the Wine server to complete execution
+		if useWine and not skipSetup:
 			EntrypointHelpers._log('Waiting for wineserver to finish running...')
 			WineHelpers.wait_for_wineserver()
