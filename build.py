@@ -15,14 +15,17 @@ def build(tag, context, buildArgs={}, options=[]):
 	run(command, check=True)
 
 
-# Build all available container images
-wineArgs = {'WINE_VERSION': WINE_VERSION}
+# Build our common base image
 build('adamrehn/common-base:latest', './common-base')
+
+# Build our base images for running Windows applications with Wine (32-bit and 64-bit prefixes, with .NET Framework and Mono)
+wineArgs = {'WINE_VERSION': WINE_VERSION}
 build('adamrehn/wine-base:{}'.format(WINE_VERSION), './wine/base', {**wineArgs, 'WINETRICKS_VERSION': '4340f09f0c17566205dcc74e15211ddac7780148'})
-build('adamrehn/wine-prefix32:{}'.format(WINE_VERSION), './wine/prefix32', wineArgs)
-build('adamrehn/wine-prefix64:{}'.format(WINE_VERSION), './wine/prefix64', wineArgs)
-build('adamrehn/wine-dotnet32:{}'.format(WINE_VERSION), './wine/dotnet', {**wineArgs, 'WINE_ARCH': '32'})
-build('adamrehn/wine-dotnet64:{}'.format(WINE_VERSION), './wine/dotnet', {**wineArgs, 'WINE_ARCH': '64'})
-build('adamrehn/wine-mono32:{}'.format(WINE_VERSION), './wine/mono', {**wineArgs, 'WINE_ARCH': '32'})
-build('adamrehn/wine-mono64:{}'.format(WINE_VERSION), './wine/mono', {**wineArgs, 'WINE_ARCH': '64'})
+for architecture in [32, 64]:
+	build('adamrehn/wine-prefix{}:{}'.format(architecture, WINE_VERSION), './wine/prefix{}'.format(architecture), wineArgs)
+	build('adamrehn/wine-dotnet{}:{}'.format(architecture, WINE_VERSION), './wine/dotnet', {**wineArgs, 'WINE_ARCH': architecture})
+	build('adamrehn/wine-mono{}:{}'.format(architecture, WINE_VERSION), './wine/mono', {**wineArgs, 'WINE_ARCH': architecture})
+
+# Build our images for Windows applications
+build('adamrehn/wine-foobar2000:latest', './wine-foobar2000', wineArgs)
 build('adamrehn/wine-foxitreader:latest', './wine-foxitreader', wineArgs)

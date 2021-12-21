@@ -5,6 +5,12 @@ from subprocess import run
 import argparse, docker, os
 
 
+# Our list of application images
+APPLICATIONS = {
+	'foobar2000': 'adamrehn/wine-foobar2000:latest',
+	'foxit-reader': 'adamrehn/wine-foxitreader:latest'
+}
+
 # The template code for our alias scripts
 ALIAS_TEMPLATE = '''#!/usr/bin/env bash
 
@@ -76,8 +82,10 @@ args = parser.parse_args()
 
 # Generate aliases for all available applications
 client = docker.from_env()
-generate_alias(client, args.alias_dir, 'foxit-reader', 'adamrehn/wine-foxitreader:latest')
+for alias, image in APPLICATIONS.items():
+	generate_alias(client, args.alias_dir, alias, image)
 
 # Generate desktop entries if requested
 if args.desktop == True:
-	generate_desktop_entry(client, args.desktop_dir, 'foxit-reader', 'adamrehn/wine-foxitreader:latest')
+	for alias, image in APPLICATIONS.items():
+		generate_desktop_entry(client, args.desktop_dir, alias, image)
