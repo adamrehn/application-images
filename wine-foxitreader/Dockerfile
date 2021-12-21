@@ -1,5 +1,5 @@
 ARG WINE_VERSION
-FROM adamrehn/wine-dotnet:${WINE_VERSION}
+FROM adamrehn/wine-dotnet32:${WINE_VERSION}
 
 # Install Foxit PDF Reader
 # (Note that the installer requires GUI support even in silent mode, so we create a temporary virtual display with Xvfb)
@@ -14,7 +14,7 @@ RUN wine-reg-add 'HKCU/Software/Wine/AppDefaults/FoxitPDFReader.exe/X11 Driver' 
 RUN generate-application-entrypoint \
 	--wine \
 	--architecture 32 \
-	--application "C:/Program Files (x86)/Foxit Software/Foxit PDF Reader/FoxitPDFReader.exe" \
+	--application "C:/Program Files/Foxit Software/Foxit PDF Reader/FoxitPDFReader.exe" \
 	--configDir "$WINEPREFIX/drive_c/users/nonroot/AppData/Roaming/Foxit Software" \
 	--outfile /home/nonroot/foxitreader.py
 

@@ -1,5 +1,6 @@
+ARG WINE_ARCH
 ARG WINE_VERSION
-FROM adamrehn/wine-base:${WINE_VERSION}
+FROM adamrehn/wine-prefix${WINE_ARCH}:${WINE_VERSION}
 
 # TEMPORARY: patch Winetricks with the correct URLs and SHA256 checksums for the .NET Framework 4.7.2 installation files
 COPY ./patch-winetricks.py /tmp/patch-winetricks.py
@@ -21,3 +22,4 @@ RUN winetricks --unattended dlls dotnet46 && wineserver --wait
 RUN winetricks --unattended dlls dotnet461 && wineserver --wait
 RUN winetricks --unattended dlls dotnet462 && wineserver --wait
 RUN winetricks --unattended dlls dotnet472 && wineserver --wait
+RUN winetricks --unattended dlls dotnet48 && wineserver --wait

@@ -54,6 +54,13 @@ class WineHelpers:
 	'''
 	
 	@staticmethod
+	def wine_architecture():
+		'''
+		Returns the architecture of the current Wine prefix (32-bit or 64-bit)
+		'''
+		return 32 if os.environ.get('WINEARCH') == 'win32' else 64
+	
+	@staticmethod
 	def bind_mount_registry(configDir):
 		'''
 		Redirects Wine's registry files to use data from the application's bind-mounted configuration directory
@@ -121,7 +128,8 @@ class WineHelpers:
 			IOHelpers.write_file(regFile, DPI_REGISTRY_TEMPLATE.format(dpi='{:0>8x}'.format(dpi)))
 			
 			# Import the keys into the registry
-			command = ['wine64', 'regedit', '/S'] + WineHelpers.transform_paths([regFile])
+			wine = 'wine64' if WineHelpers.wine_architecture() == 64 else 'wine'
+			command = [wine, 'regedit', '/S'] + WineHelpers.transform_paths([regFile])
 			logFunc(command)
 			run(command, check=True, capture_output=True, env={**os.environ, **{'WINEDEBUG': '-all'}})
 			
