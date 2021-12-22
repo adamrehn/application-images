@@ -26,6 +26,16 @@ RUN curl -fSL 'http://vgmpf.com/Wiki/images/a/ae/PSF_Decoder_v2.0.38.zip' -o /tm
 	rm '/tmp/PSF Decoder v2.0.38.fb2k-component' && \
 	rm /tmp/PSF_Decoder.zip
 
+# Install the USF Decoder component for foobar2000
+RUN curl -fSL 'https://www.foobar2000.org/getcomponent/18d5e030441f3fef68ffee70fa913122/foo_input_usf.fb2k-component' -o /tmp/foo_input_usf.fb2k-component && \
+	unzip /tmp/foo_input_usf.fb2k-component -d "$WINEPREFIX/drive_c/Program Files/foobar2000/components/" && \
+	rm /tmp/foo_input_usf.fb2k-component
+
+# Install the Game Emu Player component for foobar2000
+RUN curl -fSL 'https://www.foobar2000.org/getcomponent/4099469cbbef547344347c4409600d44/foo_gep.fb2k-component' -o /tmp/foo_gep.fb2k-component && \
+	unzip /tmp/foo_gep.fb2k-component -d "$WINEPREFIX/drive_c/Program Files/foobar2000/components/" && \
+	rm /tmp/foo_gep.fb2k-component
+
 # Generate an entrypoint script for foobar2000
 RUN generate-application-entrypoint \
 	--wine \
