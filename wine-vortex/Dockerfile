@@ -9,17 +9,13 @@ ENV WINEDLLOVERRIDES="${WINEDLLOVERRIDES};libglesv2=d"
 COPY --chown=nonroot:nonroot Vortex.zip /tmp/Vortex.zip
 RUN unzip /tmp/Vortex.zip -d "$WINEPREFIX/drive_c/Vortex"
 
-# Create a symlink and registry key to ensure Vortex can detect Steam and our games
-RUN ln -s ~/.local/share/Steam "$WINEPREFIX/drive_c/Program Files (x86)/Steam"
-RUN wine-reg-add 'HKCU/Software/Valve/Steam' /v SteamPath /t REG_SZ /d 'C:\Program Files (x86)\Steam' /f
-
 # Generate an entrypoint script for Vortex, prepending our custom startup logic
 COPY --chown=nonroot:nonroot entrypoint-extra-logic.py /tmp/entrypoint-extra-logic.py
 RUN generate-application-entrypoint \
 	--wine \
 	--architecture 64 \
 	--application "C:/Vortex/Vortex/Vortex.exe" \
-	--configDir "$WINEPREFIX/drive_c/users/nonroot/AppData/Roaming/Vortex" \
+	--configDir "/home/hostuser/.config/Vortex" \
 	--outfile /tmp/entrypoint-main.py && \
 	cat /tmp/entrypoint-extra-logic.py /tmp/entrypoint-main.py > /home/nonroot/vortex.py && \
 	chmod +x /home/nonroot/vortex.py
@@ -27,11 +23,12 @@ RUN generate-application-entrypoint \
 # Set our entrypoint script as the container's entrypoint
 ENTRYPOINT ["/home/nonroot/vortex.py"]
 
-# Configure a bind-mount for Vortex's persistent configuraton data
-LABEL docker-shell.mounts.wine-vortex.1="~/.config/Vortex:/home/nonroot/.local/share/wineprefixes/prefix/drive_c/users/nonroot/AppData/Roaming/Vortex:rw"
-
-# Bind-mount the user's Steam directory so Vortex can manage Steam games
-LABEL docker-shell.mounts.wine-vortex.2="~/.local/share/Steam:/home/nonroot/.local/share/Steam:rw"
+# Configure our bind-mounts, symlinks and registry keys to allow Vortex to manage Steam games
+# (Note that Vortex relies on hardlinking to deploy mods and this doesn't work across separate bind-mounts, so we expose a single mount here and symlink into it)
+LABEL docker-shell.mounts.wine-vortex.1="\$HOME:/home/hostuser:rw"
+RUN ln -s /home/hostuser/.config/Vortex "$WINEPREFIX/drive_c/users/nonroot/AppData/Roaming/Vortex"
+RUN ln -s /home/hostuser/.local/share/Steam "$WINEPREFIX/drive_c/Program Files (x86)/Steam"
+RUN wine-reg-add 'HKCU/Software/Valve/Steam' /v SteamPath /t REG_SZ /d 'C:\Program Files (x86)\Steam' /f
 
 # Configure the application name for use when generating a desktop entry
 LABEL application-images.name="Vortex"

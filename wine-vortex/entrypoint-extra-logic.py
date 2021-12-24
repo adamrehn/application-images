@@ -28,7 +28,7 @@ def symlinkDirectory(source, dest):
 if '---entrypoint-additional-instance' not in sys.argv:
 	
 	# Resolve the absolute paths to Steam's `steamapps` and `compatdata` directories
-	steamappsDir = expanduser('~/.local/share/Steam/steamapps')
+	steamappsDir = expanduser('/home/hostuser/.local/share/Steam/steamapps')
 	compatdataDir = join(steamappsDir, 'compatdata')
 	
 	# If the Wine prefix used by Vortex doesn't have a "My Games" subdirectory in the Documents directory then create it
