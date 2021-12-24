@@ -29,3 +29,4 @@ for architecture in [32, 64]:
 # Build our images for Windows applications
 build('adamrehn/wine-foobar2000:latest', './wine-foobar2000', wineArgs)
 build('adamrehn/wine-foxitreader:latest', './wine-foxitreader', wineArgs)
+build('adamrehn/wine-vortex:latest', './wine-vortex', wineArgs)

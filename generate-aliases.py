@@ -2,13 +2,27 @@
 from os.path import join
 from pathlib import Path
 from subprocess import run
-import argparse, docker, os
+import argparse, docker
 
 
 # Our list of application images
 APPLICATIONS = {
-	'foobar2000': 'adamrehn/wine-foobar2000:latest',
-	'foxit-reader': 'adamrehn/wine-foxitreader:latest'
+	
+	'foobar2000': {
+		'image': 'adamrehn/wine-foobar2000:latest'
+	},
+	
+	'foxit-reader': {
+		'image': 'adamrehn/wine-foxitreader:latest'
+	},
+	
+	'vortex': {
+		'image': 'adamrehn/wine-vortex:latest',
+		
+		# Vortex handles nxm:// URLs
+		'handles-urls': ['nxm']
+	}
+	
 }
 
 # The template code for our alias scripts
@@ -32,9 +46,10 @@ fi
 # The template code for desktop entries
 DESKTOP_TEMPLATE = '''[Desktop Entry]
 Name={name}
-Exec={alias} %F
+Exec={alias} {param}
 Terminal=true
 Type=Application
+{extra}
 '''
 
 
@@ -54,7 +69,7 @@ def generate_alias(client, outdir, name, image):
 	print('Generated alias "{}"'.format(alias))
 
 # Generates an XDG desktop entry for the specified container image
-def generate_desktop_entry(client, outdir, alias, image):
+def generate_desktop_entry(client, outdir, alias, image, handlesURLs):
 	
 	# Attempt to retrieve the required metadata from the container image
 	details = client.images.get(image)
@@ -66,7 +81,12 @@ def generate_desktop_entry(client, outdir, alias, image):
 	
 	# Generate the desktop entry
 	entry = join(outdir, '{}.desktop'.format(name))
-	Path(entry).write_bytes(DESKTOP_TEMPLATE.format(name=name, alias=alias).encode('utf-8'))
+	Path(entry).write_bytes(DESKTOP_TEMPLATE.format(
+		name = name,
+		alias = alias,
+		param = '%u' if handlesURLs is not None else '%F',
+		extra = 'MimeType={};'.format(';'.join(['x-scheme-handler/{}'.format(scheme) for scheme in handlesURLs])) if handlesURLs is not None else ''
+	).encode('utf-8'))
 	run(['chmod', '+x', entry], check=True)
 	print('Generated desktop entry "{}"'.format(entry))
 
@@ -82,10 +102,11 @@ args = parser.parse_args()
 
 # Generate aliases for all available applications
 client = docker.from_env()
-for alias, image in APPLICATIONS.items():
-	generate_alias(client, args.alias_dir, alias, image)
+for alias, details in APPLICATIONS.items():
+	generate_alias(client, args.alias_dir, alias, details['image'])
 
 # Generate desktop entries if requested
 if args.desktop == True:
-	for alias, image in APPLICATIONS.items():
-		generate_desktop_entry(client, args.desktop_dir, alias, image)
+	for alias, details in APPLICATIONS.items():
+		generate_desktop_entry(client, args.desktop_dir, alias, details['image'], details.get('handles-urls', None))
+	run(['update-desktop-database'], check=True)
