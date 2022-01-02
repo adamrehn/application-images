@@ -5,16 +5,17 @@ FROM adamrehn/wine-dotnet64:${WINE_VERSION}
 # (See: <https://gitlab.freedesktop.org/mesa/mesa/-/issues/3683>, <https://bugs.winehq.org/show_bug.cgi?id=44985>, <https://forum.winehq.org/viewtopic.php?t=33878>)
 ENV WINEDLLOVERRIDES="${WINEDLLOVERRIDES};libglesv2=d"
 
-# TEMPORARY: install the Vortex mod manager from a manually created ZIP file until I figure out how to get the installer to work correctly in a headless environment
-COPY --chown=nonroot:nonroot Vortex.zip /tmp/Vortex.zip
-RUN unzip /tmp/Vortex.zip -d "$WINEPREFIX/drive_c/Vortex"
+# Install the Vortex mod manager
+COPY --chown=nonroot:nonroot install-vortex.py /tmp/install-vortex.py
+RUN curl -fSL 'https://github.com/Nexus-Mods/Vortex/releases/download/v1.4.16/vortex-setup-1.4.16.exe' -o /tmp/vortex-setup.exe && \
+	python3 /tmp/install-vortex.py /tmp/vortex-setup.exe
 
 # Generate an entrypoint script for Vortex, prepending our custom startup logic
 COPY --chown=nonroot:nonroot entrypoint-extra-logic.py /tmp/entrypoint-extra-logic.py
 RUN generate-application-entrypoint \
 	--wine \
 	--architecture 64 \
-	--application "C:/Vortex/Vortex/Vortex.exe" \
+	--application "C:/Program Files/Black Tree Gaming Ltd/Vortex/Vortex.exe" \
 	--configDir "/home/hostuser/.config/Vortex" \
 	--outfile /tmp/entrypoint-main.py && \
 	cat /tmp/entrypoint-extra-logic.py /tmp/entrypoint-main.py > /home/nonroot/vortex.py && \
