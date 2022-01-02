@@ -5,10 +5,11 @@ FROM adamrehn/wine-dotnet64:${WINE_VERSION}
 # (See: <https://gitlab.freedesktop.org/mesa/mesa/-/issues/3683>, <https://bugs.winehq.org/show_bug.cgi?id=44985>, <https://forum.winehq.org/viewtopic.php?t=33878>)
 ENV WINEDLLOVERRIDES="${WINEDLLOVERRIDES};libglesv2=d"
 
-# Install the Vortex mod manager
+# Install the Vortex mod manager (be sure to remove the AppData directory to ensure our symlink is created correctly later)
 COPY --chown=nonroot:nonroot install-vortex.py /tmp/install-vortex.py
 RUN curl -fSL 'https://github.com/Nexus-Mods/Vortex/releases/download/v1.4.16/vortex-setup-1.4.16.exe' -o /tmp/vortex-setup.exe && \
-	python3 /tmp/install-vortex.py /tmp/vortex-setup.exe
+	python3 /tmp/install-vortex.py /tmp/vortex-setup.exe && \
+	rm -rf "$WINEPREFIX/drive_c/users/nonroot/AppData/Roaming/Vortex"
 
 # Generate an entrypoint script for Vortex, prepending our custom startup logic
 COPY --chown=nonroot:nonroot entrypoint-extra-logic.py /tmp/entrypoint-extra-logic.py
