@@ -58,3 +58,8 @@ if '---entrypoint-additional-instance' not in sys.argv:
 		if isdir(gameDir):
 			symlinkDirectory(gameDir, myGamesDir)
 
+# If an nxm:// URL was supplied as a command-line parameter then prefix it with `-d`
+urlIndices = [i for i in range(0, len(sys.argv)) if sys.argv[i].startswith('nxm://')]
+if len(urlIndices) > 0:
+	index = urlIndices[0]
+	sys.argv = sys.argv[0:index] + ['-d'] + sys.argv[index:]
