@@ -21,7 +21,11 @@ APPLICATIONS = {
 		
 		# Vortex handles nxm:// URLs
 		'handles-urls': ['nxm']
-	}
+	},
+	
+	'raymancontrolpanel': {
+		'image': 'adamrehn/wine-raymancontrolpanel:latest'
+	},
 	
 }
 
