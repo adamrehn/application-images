@@ -1,4 +1,4 @@
-FROM adamrehn/common-base:latest
+FROM adamrehn/application-image-base:latest
 
 # Install our prerequisites and useful tools
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
