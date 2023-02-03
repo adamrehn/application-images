@@ -16,12 +16,12 @@ RUN dpkg --add-architecture i386
 ARG WINE_VERSION
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
 	curl -fsSL 'https://dl.winehq.org/wine-builds/winehq.key' | apt-key add - && \
-	add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ focal main' && \
+	add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main' && \
 	apt-get update && apt-get install -y --install-recommends \
-		winehq-devel=${WINE_VERSION}~focal-1 \
-		wine-devel=${WINE_VERSION}~focal-1 \
-		wine-devel-amd64=${WINE_VERSION}~focal-1 \
-		wine-devel-i386=${WINE_VERSION}~focal-1
+		winehq-devel=${WINE_VERSION}~jammy-1 \
+		wine-devel=${WINE_VERSION}~jammy-1 \
+		wine-devel-amd64=${WINE_VERSION}~jammy-1 \
+		wine-devel-i386=${WINE_VERSION}~jammy-1
 
 # Install Winetricks
 ARG WINETRICKS_VERSION

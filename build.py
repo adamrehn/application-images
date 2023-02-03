@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-from subprocess import run
+from pathlib import Path
 from itertools import chain
-import argparse, sys
+import argparse, shutil, subprocess, sys
 
 
 # Our build settings
 TAG_PREFIX = 'adamrehn'
 WINE_VERSION = '7.22'
-WINETRICKS_COMMIT = 'acef23e09d291453e740584e30d7c2b46dad8a92'
+WINETRICKS_COMMIT = 'acaa0987b8ae96ef8c3a3f8d0fe45899d8d544de'
 
 # Our list of applications
 APPLICATIONS = {
@@ -39,13 +39,20 @@ APPLICATIONS = {
 }
 
 
+# Prints and executes a command
+def run(command, dryRun=False, **kwargs):
+	command = list([str(c) for c in command])
+	print(command, file=sys.stderr, flush=True)
+	if not dryRun:
+		return subprocess.run(command, **{'check': True, **kwargs})
+	else:
+		return None
+
 # Builds the specified container image
 def build(dryRun, tag, context, buildArgs={}, options=[]):
 	flags = [['--build-arg', '{}={}'.format(k,v)] for k, v in buildArgs.items()] + [options]
 	command = ['docker', 'buildx', 'build', '--progress=plain', '-t', '{}/{}'.format(TAG_PREFIX, tag), context] + list(chain.from_iterable(flags))
-	print(command, flush=True)
-	if not dryRun:
-		run(command, check=True)
+	run(command, dryRun=dryRun)
 
 
 # Parse our command-line arguments
@@ -55,6 +62,15 @@ parser.add_argument('--dry-run', action='store_true', help="Print build commands
 parser.add_argument('--no-applications', action='store_true', help="Don't build any application images, just the base images")
 parser.add_argument('--no-dotnet', action='store_true', help="Only build Mono images for Wine, not .NET Framework images")
 args = parser.parse_args()
+
+# If we don't have the Ubuntu 22.04 OpenGL image then build it from source
+externalDir = Path(__file__).parent / 'external'
+openglDir = externalDir / 'opengl'
+if not openglDir.exists() and not args.dry_run:
+	run(['git', 'clone', '--depth=1', '-b', 'ubuntu20.04', 'https://gitlab.com/nvidia/container-images/opengl.git', str(openglDir)])
+	shutil.copy2(openglDir / 'NGC-DL-CONTAINER-LICENSE', openglDir / 'base' / 'NGC-DL-CONTAINER-LICENSE')
+	build(args.dry_run, 'opengl:base-ubuntu22.04', openglDir / 'base', {'from': 'ubuntu:22.04'})
+	build(args.dry_run, 'opengl:glvnd-runtime-ubuntu22.04', openglDir / 'glvnd' / 'runtime', {'from': '{}/opengl:base-ubuntu22.04'.format(TAG_PREFIX), 'LIBGLVND_VERSION': '1.2'})
 
 # Build our common base image
 build(args.dry_run, 'application-image-base:latest', './common-base')

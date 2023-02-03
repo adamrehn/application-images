@@ -1,5 +1,5 @@
 # Extend a base image with OpenGL support for NVIDIA GPUs
-FROM nvidia/opengl:1.2-glvnd-runtime-ubuntu20.04
+FROM adamrehn/opengl:glvnd-runtime-ubuntu22.04
 
 # Disable interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive

@@ -17,18 +17,18 @@ RUN winetricks --unattended settings sound=pulse && wineserver --wait
 
 # Preinstall the 64-bit version of Wine Gecko
 RUN curl -fSL 'https://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86_64.msi' -o /tmp/wine-gecko-x86_64.msi && \
-	wine64 msiexec /i /tmp/wine-gecko-x86_64.msi && \
+	xvfb-run -a wine64 msiexec /i /tmp/wine-gecko-x86_64.msi && \
 	wineserver --wait && \
 	rm /tmp/wine-gecko-x86_64.msi
 
 # Preinstall the 32-bit version of Wine Gecko
 RUN curl -fSL 'https://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86.msi' -o /tmp/wine-gecko-x86.msi && \
-	wine msiexec /i /tmp/wine-gecko-x86.msi && \
+	xvfb-run -a wine msiexec /i /tmp/wine-gecko-x86.msi && \
 	wineserver --wait && \
 	rm /tmp/wine-gecko-x86.msi
 
 # Install the Windows version of Python 3.9
-RUN winetricks --unattended dlls corefonts && winetricks --unattended settings win10
+RUN xvfb-run -a winetricks --unattended dlls corefonts && xvfb-run -a winetricks --unattended settings win10
 RUN curl -fSL 'https://www.python.org/ftp/python/3.9.9/python-3.9.9-amd64.exe' -o /tmp/python.exe && \
 	xvfb-run -a wine /tmp/python.exe /quiet InstallAllUsers=1 PrependPath=1 TargetDir=C:/Python39 && \
 	wineserver --wait && \
