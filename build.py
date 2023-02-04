@@ -4,7 +4,7 @@ from itertools import chain
 import argparse, shutil, subprocess, sys
 
 
-# Our build settings
+# Our default build settings
 TAG_PREFIX = 'adamrehn'
 WINE_VERSION = '7.22'
 WINETRICKS_COMMIT = 'acaa0987b8ae96ef8c3a3f8d0fe45899d8d544de'
@@ -61,6 +61,7 @@ parser.add_argument('--applications', default='', help="Only build the specified
 parser.add_argument('--dry-run', action='store_true', help="Print build commands without running them")
 parser.add_argument('--no-applications', action='store_true', help="Don't build any application images, just the base images")
 parser.add_argument('--no-dotnet', action='store_true', help="Only build Mono images for Wine, not .NET Framework images")
+parser.add_argument('--wine-version', default=WINE_VERSION, help="The version of Wine to install")
 args = parser.parse_args()
 
 # If we don't have the Ubuntu 22.04 OpenGL image then build it from source
@@ -76,14 +77,14 @@ if not openglDir.exists() and not args.dry_run:
 build(args.dry_run, 'application-image-base:latest', './common-base')
 
 # Build our base images for running Windows applications with Wine (32-bit and 64-bit prefixes, with Mono and .NET Framework)
-wineArgs = {'WINE_VERSION': WINE_VERSION}
-build(args.dry_run, 'wine-base:{}'.format(WINE_VERSION), './wine/base', {**wineArgs, 'WINETRICKS_VERSION': WINETRICKS_COMMIT})
+wineArgs = {'WINE_VERSION': args.wine_version}
+build(args.dry_run, 'wine-base:{}'.format(args.wine_version), './wine/base', {**wineArgs, 'WINETRICKS_VERSION': WINETRICKS_COMMIT})
 for architecture in [32, 64]:
 	archFlags = {**wineArgs, 'WINE_ARCH': architecture}
-	build(args.dry_run, 'wine-prefix{}:{}'.format(architecture, WINE_VERSION), './wine/prefix{}'.format(architecture), wineArgs)
-	build(args.dry_run, 'wine-mono{}:{}'.format(architecture, WINE_VERSION), './wine/mono', archFlags)
+	build(args.dry_run, 'wine-prefix{}:{}'.format(architecture, args.wine_version), './wine/prefix{}'.format(architecture), wineArgs)
+	build(args.dry_run, 'wine-mono{}:{}'.format(architecture, args.wine_version), './wine/mono', archFlags)
 	if not args.no_dotnet:
-		build(args.dry_run, 'wine-dotnet{}:{}'.format(architecture, WINE_VERSION), './wine/dotnet', archFlags)
+		build(args.dry_run, 'wine-dotnet{}:{}'.format(architecture, args.wine_version), './wine/dotnet', archFlags)
 
 # Build the application images
 if not args.no_applications:
