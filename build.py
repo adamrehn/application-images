@@ -3,6 +3,8 @@ from pathlib import Path
 from itertools import chain
 import argparse, shutil, subprocess, sys
 
+# The Wine prefix architectures we support building images for
+ARCHITECTURES = [32, 64]
 
 # Our default build settings
 TAG_PREFIX = 'adamrehn'
@@ -62,7 +64,11 @@ parser.add_argument('--dry-run', action='store_true', help="Print build commands
 parser.add_argument('--no-applications', action='store_true', help="Don't build any application images, just the base images")
 parser.add_argument('--no-dotnet', action='store_true', help="Only build Mono images for Wine, not .NET Framework images")
 parser.add_argument('--wine-version', default=WINE_VERSION, help="The version of Wine to install")
+parser.add_argument('--arch', type=int, default=None, choices=ARCHITECTURES, help="Build a specific architecture (32 bit or 64 bit)")
 args = parser.parse_args()
+
+# If no architecture was specified then build images for both 32-bit and 64-bit Wine prefixes
+architectures = [args.arch] if args.arch is not None else ARCHITECTURES
 
 # If we don't have the Ubuntu 22.04 OpenGL image then build it from source
 externalDir = Path(__file__).parent / 'external'
@@ -79,7 +85,7 @@ build(args.dry_run, 'application-image-base:latest', './common-base')
 # Build our base images for running Windows applications with Wine (32-bit and 64-bit prefixes, with Mono and .NET Framework)
 wineArgs = {'WINE_VERSION': args.wine_version}
 build(args.dry_run, 'wine-base:{}'.format(args.wine_version), './wine/base', {**wineArgs, 'WINETRICKS_VERSION': WINETRICKS_COMMIT})
-for architecture in [32, 64]:
+for architecture in architectures:
 	archFlags = {**wineArgs, 'WINE_ARCH': architecture}
 	build(args.dry_run, 'wine-prefix{}:{}'.format(architecture, args.wine_version), './wine/prefix{}'.format(architecture), wineArgs)
 	build(args.dry_run, 'wine-mono{}:{}'.format(architecture, args.wine_version), './wine/mono', archFlags)
