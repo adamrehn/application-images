@@ -65,6 +65,7 @@ parser.add_argument('--no-applications', action='store_true', help="Don't build 
 parser.add_argument('--no-dotnet', action='store_true', help="Only build Mono images for Wine, not .NET Framework images")
 parser.add_argument('--wine-version', default=WINE_VERSION, help="The version of Wine to install")
 parser.add_argument('--arch', type=int, default=None, choices=ARCHITECTURES, help="Build a specific architecture (32 bit or 64 bit)")
+parser.add_argument('--opengl-only', action='store_true', help="Only build the Ubuntu 22.04 OpenGL base image")
 args = parser.parse_args()
 
 # If no architecture was specified then build images for both 32-bit and 64-bit Wine prefixes
@@ -78,6 +79,10 @@ if not openglDir.exists() and not args.dry_run:
 	shutil.copy2(openglDir / 'NGC-DL-CONTAINER-LICENSE', openglDir / 'base' / 'NGC-DL-CONTAINER-LICENSE')
 	build(args.dry_run, 'opengl:base-ubuntu22.04', openglDir / 'base', {'from': 'ubuntu:22.04'})
 	build(args.dry_run, 'opengl:glvnd-runtime-ubuntu22.04', openglDir / 'glvnd' / 'runtime', {'from': '{}/opengl:base-ubuntu22.04'.format(TAG_PREFIX), 'LIBGLVND_VERSION': '1.2'})
+
+# If we were only building the OpenGL base image then exit
+if args.opengl_only == True:
+	sys.exit(0)
 
 # Build our common base image
 build(args.dry_run, 'application-image-base:latest', './common-base')
