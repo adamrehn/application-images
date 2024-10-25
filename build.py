@@ -9,7 +9,7 @@ ARCHITECTURES = [32, 64]
 # Our default build settings
 TAG_PREFIX = 'adamrehn'
 WINE_VERSION = '7.22'
-WINETRICKS_COMMIT = 'acaa0987b8ae96ef8c3a3f8d0fe45899d8d544de'
+WINETRICKS_COMMIT = 'a06ea8795482d2f49a5461ab5f23e0036e38d12b'
 
 # Our list of applications
 APPLICATIONS = {
