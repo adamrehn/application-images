@@ -75,7 +75,7 @@ architectures = [args.arch] if args.arch is not None else ARCHITECTURES
 externalDir = Path(__file__).parent / 'external'
 openglDir = externalDir / 'opengl'
 if not openglDir.exists() and not args.dry_run:
-	run(['git', 'clone', '--depth=1', '-b', 'ubuntu20.04', 'https://gitlab.com/nvidia/container-images/opengl.git', str(openglDir)])
+	run(['git', 'clone', '--depth=1', '-b', 'ubuntu22.04', 'https://gitlab.com/nvidia/container-images/opengl.git', str(openglDir)])
 	shutil.copy2(openglDir / 'NGC-DL-CONTAINER-LICENSE', openglDir / 'base' / 'NGC-DL-CONTAINER-LICENSE')
 	build(args.dry_run, 'opengl:base-ubuntu22.04', openglDir / 'base', {'from': 'ubuntu:22.04'})
 	build(args.dry_run, 'opengl:glvnd-runtime-ubuntu22.04', openglDir / 'glvnd' / 'runtime', {'from': '{}/opengl:base-ubuntu22.04'.format(TAG_PREFIX), 'LIBGLVND_VERSION': '1.2'})
